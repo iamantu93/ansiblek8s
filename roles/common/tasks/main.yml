@@ -1,0 +1,71 @@
+---
+# tasks file for common
+
+- name: Setup hosts in both master and worker
+  template:
+    src: hosts.j2
+    dest: /etc/hosts
+
+- name: Disable swap in /etc/fstabe
+  shell: sed -i '/swap/s/^/#/g' /etc/fstab && swapoff -a
+
+- name: Stop firewalld
+  systemd:
+    name: firewalld
+    state: stopped
+
+- name: Disable selinux policy
+  shell: sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+
+- name: Enable kernel modules
+  copy: src=files/modules-load.d/k8s.conf dest=/etc/modules-load.d/k8s.conf
+  tags: Enable kernel modules
+
+- name: Enable modeprobes
+  shell:  modprobe overlay && modprobe br_netfilter
+
+- name: Create systemctl params
+  copy: src=files/sysctl.d/k8s.conf dest=/etc/sysctl.d/k8s.conf
+
+- name: Enable the modules now
+  shell: sysctl --system
+
+- name: Install dnf-utils
+  dnf:
+    name: dnf-utils
+    state: latest
+
+- name: Add docker repo
+  copy: src=files/repo/docker-ce.repo dest=/etc/yum.repos.d/docker-ce.repo
+
+- name: Update repo
+  shell: dnf repolist && dnf makecache
+
+- name: Install containerd
+  dnf: 
+    name: containerd.io 
+    state: latest
+  
+- name: Change containerd config and enable systemdCgroup
+  copy: src=files/containerd/config.toml dest=/etc/containerd/config.toml
+
+- name: Start containerd service
+  service:
+    name: containerd
+    state: started
+    enabled: true
+
+- name: Add kubernetes repo
+  copy: src=files/repo/kubernetes.repo dest=/etc/yum.repos.d/kubernetes.repo
+
+- name: Update repo
+  shell: dnf repolist && dnf makecache
+
+- name: install kubernetes packages
+  shell: sudo dnf install kubelet kubeadm kubectl --disableexcludes=kubernetes -y
+
+- name: Enable kubelet service
+  service:
+    name: kubelet
+    state: started
+    enabled: true

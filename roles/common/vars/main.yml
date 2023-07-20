@@ -1,0 +1,4 @@
+---
+# vars file for common
+master_ip: 192.168.20.142 
+worker_ip: 192.168.20.147 

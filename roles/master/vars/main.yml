@@ -1,0 +1,4 @@
+---
+# vars file for master
+master_ip: 192.168.20.142
+pod_cidr: 10.10.0.0/16

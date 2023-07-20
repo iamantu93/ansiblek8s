@@ -1,0 +1,26 @@
+---
+- name: Common work
+  hosts: all 
+  become: true
+  roles:
+    - common
+
+- name: Master node setup
+  hosts: master
+  become: true
+  roles:
+    - master
+
+- name: Worker node join
+  hosts: worker
+  become: true
+  roles:
+    - worker
+
+- name: Automation Server setup
+  hosts: automation
+  become: true
+  roles:
+    - automation
+
+

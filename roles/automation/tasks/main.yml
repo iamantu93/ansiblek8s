@@ -1,0 +1,76 @@
+---
+- name: Install Java
+  yum:
+    name: java-11-openjdk
+    state: present
+  tags:
+      - java
+
+- name: Add Jenkins repository
+  yum_repository:
+    name: jenkins
+    baseurl: https://pkg.jenkins.io/redhat-stable
+    gpgcheck: yes
+    gpgkey: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+    tags:
+      - jenkins
+
+- name: Install Jenkins
+  yum:
+    name: jenkins
+    state: present
+  tags:
+    - jenkins
+
+- name: Start Jenkins service
+  systemd:
+    name: jenkins
+    state: started
+    enabled: yes
+  tags:
+    - jenkins
+
+- name: Install Docker dependencies
+  yum:
+    name: 
+      - yum-utils
+      - device-mapper-persistent-data
+      - lvm2
+    state: present
+  tags:
+    - docker
+
+- name: Add Docker repository
+  command: yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+  tags:
+    - docker
+
+- name: Install Docker
+  yum:
+    name: docker-ce
+    state: present
+  tags:
+    - docker
+
+- name: Start Docker service
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+  tags:
+    - docker
+
+- name: Add jenkins user to docker group
+  user:
+    name: jenkins
+    groups: docker
+    append: yes
+  tags:
+    - docker
+
+- name: Install Maven
+  yum:
+    name: maven
+    state: present
+  tags:
+    - maven

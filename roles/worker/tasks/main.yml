@@ -1,0 +1,15 @@
+---
+# tasks file for worker
+- name: Set a hostname for worker
+  hostname:
+    name: worker
+
+- name: Copy join command from the master worker
+  copy:
+     src: /tmp/init_output
+     dest: /tmp/ 
+     mode: 0777
+
+- name: Join worker node to cluster
+  command: sh /tmp/init_output
+  register: joined_or_not

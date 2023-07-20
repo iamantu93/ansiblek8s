@@ -1,0 +1,42 @@
+---
+# tasks file for master
+- name: Set a hostname for master
+  hostname:
+    name: master
+
+- name: Download images for kubernetes cluster
+  shell: 
+    cmd: kubeadm config images pull
+
+- name: Initialize kubernetes master pane
+  shell:
+    cmd: kubeadm init --control-plane-endpoint={{ master_ip }}  --pod-network-cidr={{ pod_cidr  }} --cri-socket=unix:///run/containerd/containerd.sock | tail -n 2 
+  register: join_command_output
+
+- name: Save the Join command output
+  copy:
+    content: "{{ join_command_output.stdout }}"
+    dest: "/tmp/init_output"
+
+- name: Fetch the file from the master to ansible machine
+  fetch:
+     src: /tmp/init_output
+     dest: /tmp/ 
+     flat: yes
+
+- name: Copy kubernetes config to user home directory
+  shell:
+    cmd: |
+      mkdir -p $HOME/.kube
+      sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+      sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+- name: Download calico yaml file
+  get_url:
+    url: https://raw.githubusercontent.com/projectcalico/calico/master/manifests/calico.yaml
+    dest: /tmp/calico.yaml
+    mode: '0440'
+
+- name: Install calico CNI plugin
+  shell:
+    cmd: kubectl apply -f /tmp/calico.yaml
